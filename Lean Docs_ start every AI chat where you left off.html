@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lean Docs: start every AI chat where you left off</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#f2f5f8; --surface:#ffffff; --ink:#152033; --muted:#52607a; --line:#d5dce6;
+  --accent:#0b6e7a; --accent-soft:#e1f1f3; --accent-ink:#ffffff;
+  --code:#e9eff6; --mark-bg:#ffe7a3; --mark-ink:#4a3500;
+  --warn-bg:#fff4dc; --warn-line:#e0a100;
+  --bar-big:#8a97ad; --bar-small:#0b6e7a;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0f1724; --surface:#17202f; --ink:#e6ebf3; --muted:#9aa7bd; --line:#2b3850;
+    --accent:#4cc3d1; --accent-soft:#12303a; --accent-ink:#06222a;
+    --code:#1c2840; --mark-bg:#5a4400; --mark-ink:#ffe7a3;
+    --warn-bg:#2f2610; --warn-line:#c9971c;
+    --bar-big:#5d6c86; --bar-small:#4cc3d1;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0f1724; --surface:#17202f; --ink:#e6ebf3; --muted:#9aa7bd; --line:#2b3850;
+  --accent:#4cc3d1; --accent-soft:#12303a; --accent-ink:#06222a;
+  --code:#1c2840; --mark-bg:#5a4400; --mark-ink:#ffe7a3;
+  --warn-bg:#2f2610; --warn-line:#c9971c;
+  --bar-big:#5d6c86; --bar-small:#4cc3d1;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:calc(env(safe-area-inset-top,0px) + 4.5rem)}
+body{margin:0;min-height:100%;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6}
+.wrap{max-width:46rem;margin:0 auto;padding:0 1.25rem}
+header.top{padding:2.5rem 0 1.25rem}
+header.top h1{font-size:clamp(1.7rem,4.5vw,2.4rem);line-height:1.15;font-weight:600;letter-spacing:-.015em;margin:0 0 .75rem}
+header.top p{margin:0;color:var(--muted);max-width:38rem}
+.tabbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.tabbar .wrap{display:flex;gap:.25rem;overflow-x:auto}
+[role=tab]{appearance:none;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);font:500 1rem/1 var(--sans);padding:.9rem .9rem .8rem;cursor:pointer;white-space:nowrap}
+[role=tab]:hover{color:var(--ink)}
+[role=tab][aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+main{padding:1.75rem 0 4rem}
+[role=tabpanel][hidden]{display:none}
+h2{font-size:1.4rem;line-height:1.25;font-weight:600;margin:2.5rem 0 .75rem;letter-spacing:-.005em}
+h2:first-child{margin-top:0}
+h3{font-size:1.05rem;font-weight:600;margin:1.5rem 0 .4rem}
+p{margin:.6rem 0}
+ul,ol{padding-left:1.25rem;margin:.6rem 0}
+li{margin:.35rem 0}
+a{color:var(--accent)}
+code,kbd{font-family:var(--mono);font-size:.88em;background:var(--code);padding:.1em .35em;border-radius:4px}
+.tablewrap{overflow-x:auto;margin:1rem 0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:34rem;font-size:.95rem}
+th,td{text-align:left;vertical-align:top;padding:.65rem .8rem;border-bottom:1px solid var(--line)}
+th{font-weight:600;background:var(--accent-soft)}
+tr:last-child td{border-bottom:0}
+/* load comparison */
+figure.load{margin:1.25rem 0;padding:1.25rem;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+figure.load .row{display:grid;grid-template-columns:11rem 1fr 9rem;gap:.75rem;align-items:center;margin:.55rem 0}
+figure.load .track{background:var(--code);border-radius:4px;height:1.6rem;overflow:hidden}
+figure.load .fill{height:100%;border-radius:4px}
+figure.load .big{background:var(--bar-big)}
+figure.load .small{background:var(--bar-small)}
+figure.load .val{font-weight:600;font-variant-numeric:tabular-nums}
+figure.load figcaption{color:var(--muted);font-size:.88rem;margin-top:.9rem}
+@media (max-width:36rem){figure.load .row{grid-template-columns:1fr;gap:.3rem}}
+/* steps */
+ol.steps{list-style:none;counter-reset:s;padding:0;margin:1rem 0}
+ol.steps>li{counter-increment:s;position:relative;padding:0 0 1.25rem 3rem;margin:0}
+ol.steps>li::before{content:counter(s);position:absolute;left:0;top:-.1rem;width:2rem;height:2rem;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:600;display:grid;place-items:center;font-variant-numeric:tabular-nums}
+ol.steps>li::after{content:"";position:absolute;left:1rem;top:2rem;bottom:.15rem;width:1px;background:var(--line)}
+ol.steps>li:last-child::after{display:none}
+ol.steps strong:first-child{display:block;margin-bottom:.15rem}
+.callout{margin:1.25rem 0;padding:.9rem 1rem;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0}
+.callout.warn{border-left-color:var(--warn-line);background:var(--warn-bg)}
+.callout p:first-child{margin-top:0}.callout p:last-child{margin-bottom:0}
+.loop{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin:1rem 0}
+.loop>div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:.9rem 1rem}
+.loop h3{margin:0 0 .3rem}
+.loop p{margin:.3rem 0;font-size:.95rem}
+@media (max-width:40rem){.loop{grid-template-columns:1fr}}
+/* prompts */
+.jump{display:flex;flex-wrap:wrap;gap:.4rem;margin:1rem 0 .5rem}
+.jump a{border:1px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none;border-radius:999px;padding:.3rem .75rem;font-size:.92rem}
+.jump a:hover{border-color:var(--accent);color:var(--accent)}
+.pcard{margin:1.75rem 0 2.25rem}
+.pcard header{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:.4rem}
+.pcard h3{margin:0;font-size:1.15rem}
+.pcard dl.meta{display:grid;grid-template-columns:7.5rem 1fr;gap:.2rem .75rem;margin:.5rem 0 .75rem;font-size:.95rem}
+.pcard dl.meta dt{color:var(--muted)}
+.pcard dl.meta dd{margin:0}
+button.copy{appearance:none;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);font:500 .92rem var(--sans);padding:.45rem .9rem;border-radius:6px;cursor:pointer;flex:none;min-width:5.2rem}
+button.copy:hover{filter:brightness(1.08)}
+pre.prompt{margin:0;padding:1rem 1.1rem;background:var(--code);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;font:400 .86rem/1.55 var(--mono);white-space:pre-wrap;overflow-wrap:anywhere;max-height:34rem;overflow:auto}
+pre.prompt mark{background:var(--mark-bg);color:var(--mark-ink);border-radius:3px;padding:0 .15em}
+/* glossary */
+.search{width:100%;font:400 1rem var(--sans);padding:.65rem .8rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+dl.gloss{margin:1rem 0}
+dl.gloss .g{padding:.8rem 0;border-bottom:1px solid var(--line)}
+dl.gloss dt{font-weight:600}
+dl.gloss dd{margin:.15rem 0 0}
+dl.gloss .here{color:var(--muted);display:block;margin-top:.2rem;font-size:.93rem}
+#nomatch{color:var(--muted);display:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+footer{color:var(--muted);font-size:.88rem;padding:1.5rem 0 2rem;border-top:1px solid var(--line)}
+@media (prefers-reduced-motion:no-preference){button.copy,[role=tab],.jump a{transition:background-color .15s,color .15s,border-color .15s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Start every AI chat knowing where you left off</h1>
+    <p>A three-file setup that lets Claude pick up a project in seconds, read only what the task needs, and keep each chat cheap. It comes from how we documented NorthStar, and it works for any project.</p>
+  </header>
+</div>
+
+<div class="tabbar">
+  <div class="wrap" role="tablist" aria-label="Guide sections">
+    <button role="tab" id="t-guide" aria-controls="guide" aria-selected="true">Guide</button>
+    <button role="tab" id="t-prompts" aria-controls="prompts" aria-selected="false" tabindex="-1">Prompts</button>
+    <button role="tab" id="t-templates" aria-controls="templates" aria-selected="false" tabindex="-1">Templates</button>
+    <button role="tab" id="t-glossary" aria-controls="glossary" aria-selected="false" tabindex="-1">Glossary</button>
+  </div>
+</div>
+
+<main class="wrap">
+
+<!-- ===================== GUIDE ===================== -->
+<section role="tabpanel" id="guide" aria-labelledby="t-guide">
+  <h2>The problem</h2>
+  <p>Claude does not remember earlier chats. Whatever it needs to know, it has to read again at the start of each new one. If the whole project lives in one big document, every chat begins by reading all of it, and every message after that carries it along. That is slow, it eats your usage limits, and it buries the three things that matter today under months of history.</p>
+  <p>The fix is to split the project's memory by how often it is needed: a small file read every time, a big file read only in slices, and a third file for history that is almost never opened.</p>
+
+  <figure class="load" role="img" aria-label="Start-of-chat load: about 50,000 tokens with one big document, about 8,000 tokens with a core file only.">
+    <div class="row"><span>One big document, read in full</span><div class="track"><div class="fill big" style="width:100%"></div></div><span class="val">about 50,000 tokens</span></div>
+    <div class="row"><span>Core file only</span><div class="track"><div class="fill small" style="width:16%"></div></div><span class="val">about 8,000 tokens</span></div>
+    <figcaption>NorthStar documents at the start of a chat, before and after the split. Rough estimates: one token is about 4 characters of English text. When Claude needs more, it reads one section of the big file, usually 2,000 to 5,000 tokens.</figcaption>
+  </figure>
+
+  <h2>The three files</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>File</th><th>What goes in it</th><th>When Claude reads it</th><th>Where to keep it</th><th>Size</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Core</strong><br><code>XX-core.md</code></td><td>Where you stopped, what to do next, how you like to work, the rules, lessons from past mistakes, and a map of where everything else is.</td><td>In full, at the start of every chat.</td><td>Project Knowledge</td><td>Under 30 KB</td></tr>
+      <tr><td><strong>Reference</strong><br><code>XX-reference.md</code></td><td>Everything else: current state, decisions, open questions, risks, backlog, people, sources, and the steps for closing a session.</td><td>One section at a time, only when the task needs it.</td><td>Project folder, not Project Knowledge</td><td>Under 150 KB</td></tr>
+      <tr><td><strong>Archive</strong><br><code>XX-archive.md</code></td><td>History that no longer drives decisions: resolved items, old changelog, detail from past meetings.</td><td>Almost never. Only when context is missing.</td><td>Project folder</td><td>Grows freely</td></tr>
+    </tbody>
+  </table></div>
+  <p>Claude picks a short prefix from your project name for the file names, so you never type one (NorthStar's files start with <code>PX</code>). There is an optional fourth piece: a readable summary for people who do not use the AI. Claude updates it only when someone asks.</p>
+
+  <h2>Set it up once</h2>
+  <p>About 30 minutes. You paste, Claude does the writing.</p>
+  <ol class="steps">
+    <li><strong>Make a folder.</strong>Create a folder for the project on your computer, for example <code>Documents/MyProject</code>. The files are Markdown (<code>.md</code>), which is plain text with simple formatting. Any text editor opens them.</li>
+    <li><strong>Create a Project in Claude.</strong>Give it a name. Leave the instructions empty for now, because Claude writes them for you in step 4.</li>
+    <li><strong>Paste the setup prompt.</strong>Open a chat inside the Project and paste <a href="#prompts:p1" data-goto="prompts:p1">Prompt 1</a>. Claude asks one round of questions, then writes the three files. If you already have notes, documents or old chats about the project, use <a href="#prompts:p5" data-goto="prompts:p5">Prompt 5</a> instead.</li>
+    <li><strong>Save the files in the right places.</strong>Put the <em>core</em> in the Project's Knowledge. Put the <em>reference</em> and <em>archive</em> in your project folder only. Then paste the instructions block Claude gave you into the Project settings.</li>
+    <li><strong>Test it.</strong>Start a fresh chat in the Project and paste <a href="#prompts:p6" data-goto="prompts:p6">Prompt 6</a> (token check). It should list the core file and the instructions, and nothing else big. If the reference shows up, move it out of Project Knowledge.</li>
+    <li><strong>Work.</strong>Begin each chat with <a href="#prompts:p2" data-goto="prompts:p2">Prompt 2</a> and end it with <a href="#prompts:p3" data-goto="prompts:p3">Prompt 3</a>.</li>
+  </ol>
+
+  <div class="callout warn">
+    <p><strong>Why the reference stays out of Project Knowledge.</strong> Files attached to a Project are available to every chat in it, and depending on size and plan they can be loaded in full each time. That is the exact cost we are removing. If the reference sits there, you may pay for it on every chat even though the instructions say not to read it.</p>
+  </div>
+
+  <div class="callout">
+    <p><strong>Which tool are you using?</strong> In Claude Cowork (or any setup where Claude can open files in a folder), Claude reads one section of the reference by itself. That is the best case. In a plain chat with no folder access, Claude cannot open the reference on its own. Tell Prompt 1 so in the interview, and it will split the reference into four to six small topic files and tell you which one to attach for which task.</p>
+  </div>
+
+  <h2>Every working session</h2>
+  <div class="loop">
+    <div><h3>Start</h3><p>New chat. Paste <a href="#prompts:p2" data-goto="prompts:p2">Prompt 2</a> with today's goal.</p><p>Claude reads the core and answers in five lines: where you stopped, what it suggests, what it cannot confirm.</p></div>
+    <div><h3>Work</h3><p>One chat per task. Ask for sections by name, never for "all the files".</p><p>If the chat gets long or Claude starts repeating itself, close it.</p></div>
+    <div><h3>Close</h3><p>Paste <a href="#prompts:p3" data-goto="prompts:p3">Prompt 3</a>.</p><p>Claude updates only the sections that changed, rewrites "Where we stopped", bumps the version and hands you the new files. Save them over the old ones.</p></div>
+  </div>
+
+  <h2>Habits that keep it cheap</h2>
+  <ul>
+    <li>One chat per task. Long chats re-send everything on every message.</li>
+    <li>Say your goal in the first message. Claude then knows what to read.</li>
+    <li>Close the session before the chat gets long, not after it breaks.</li>
+    <li>Keep the core under 30 KB. When it grows, run <a href="#prompts:p4" data-goto="prompts:p4">Prompt 4</a>.</li>
+    <li>Update the stakeholder summary only when someone needs it.</li>
+    <li>Turn off connected apps the project does not use. Each one adds tools Claude carries into every chat.</li>
+    <li>Never delete history. Move it to the archive, word for word.</li>
+  </ul>
+
+  <h2>When something looks wrong</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>What you see</th><th>Likely cause</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td>Claude reads the whole reference at the start.</td><td>The reference is in Project Knowledge, or the instructions block is missing.</td><td>Move the reference to the folder. Re-paste the instructions. Run Prompt 6 to confirm.</td></tr>
+      <tr><td>Claude does not know what happened last time.</td><td>The close step was skipped, or the new core was not saved over the old one.</td><td>Compare the version number at the top of the core with the one Claude quotes back.</td></tr>
+      <tr><td>Claude says it cannot open the reference.</td><td>No folder access in this tool.</td><td>Use topic files (see the callout in the setup).</td></tr>
+      <tr><td>Two copies of a file disagree.</td><td>Drift. One copy was updated and the other was not.</td><td>Check the version line in both. Keep the newer one and overwrite the other.</td></tr>
+      <tr><td>The core keeps growing.</td><td>History is piling up in a file read every time.</td><td>Run Prompt 4 and approve what moves to the archive.</td></tr>
+      <tr><td>A guess shows up in the files as a fact.</td><td>The labels were not used.</td><td>Ask Claude to relabel the section. The label rules live in the core file.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ===================== PROMPTS ===================== -->
+<section role="tabpanel" id="prompts" aria-labelledby="t-prompts" hidden>
+  <h2>Prompts</h2>
+  <p>Press Copy, paste into Claude. Anything in <mark style="background:var(--mark-bg);color:var(--mark-ink);border-radius:3px;padding:0 .15em">{curly braces}</mark> is a blank: replace it before you send. Only Prompts 2 and 7 have blanks. The others you paste exactly as they are: Claude chooses the project name and file names itself.</p>
+  <nav class="jump" aria-label="Jump to a prompt">
+    <a href="#prompts:p0" data-goto="prompts:p0">0 Instructions</a>
+    <a href="#prompts:p1" data-goto="prompts:p1">1 Set up</a>
+    <a href="#prompts:p2" data-goto="prompts:p2">2 Start</a>
+    <a href="#prompts:p3" data-goto="prompts:p3">3 Close</a>
+    <a href="#prompts:p4" data-goto="prompts:p4">4 Slim down</a>
+    <a href="#prompts:p5" data-goto="prompts:p5">5 Convert</a>
+    <a href="#prompts:p6" data-goto="prompts:p6">6 Token check</a>
+    <a href="#prompts:p7" data-goto="prompts:p7">7 Summary</a>
+  </nav>
+
+  <article class="pcard" id="p0">
+    <header><h3>0. Project instructions</h3><button class="copy" type="button" data-copy="p0">Copy</button></header>
+    <dl class="meta"><dt>When</dt><dd>Once per project. Prompts 1 and 5 write this block for you. Use this version if you set things up by hand.</dd><dt>Paste in</dt><dd>Project settings, instructions field.</dd><dt>You get</dt><dd>Nothing visible. It just applies to every chat in the Project.</dd></dl>
+    <pre class="prompt" data-src="p0"></pre>
+  </article>
+
+  <article class="pcard" id="p1">
+    <header><h3>1. Set up a new project</h3><button class="copy" type="button" data-copy="p1">Copy</button></header>
+    <dl class="meta"><dt>When</dt><dd>You are starting a project from scratch.</dd><dt>Paste in</dt><dd>The first chat inside the new Project.</dd><dt>You get</dt><dd>A short round of questions, then the three files, their sizes, and the instructions block.</dd></dl>
+    <pre class="prompt" data-src="p1"></pre>
+  </article>
+
+  <article class="pcard" id="p2">
+    <header><h3>2. Start a session</h3><button class="copy" type="button" data-copy="p2">Copy</button></header>
+    <dl class="meta"><dt>When</dt><dd>The first message of every new chat.</dd><dt>Paste in</dt><dd>A new chat inside the Project.</dd><dt>You get</dt><dd>Five lines: where you stopped, a suggestion for today, and what Claude cannot confirm.</dd></dl>
+    <pre class="prompt" data-src="p2"></pre>
+  </article>
+
+  <article class="pcard" id="p3">
+    <header><h3>3. Close the session</h3><button class="copy" type="button" data-copy="p3">Copy</button></header>
+    <dl class="meta"><dt>When</dt><dd>You finish working, or the chat is getting long.</dd><dt>Paste in</dt><dd>The same chat you worked in.</dd><dt>You get</dt><dd>Updated files and a five-line summary. Save the files over the old ones.</dd></dl>
+    <pre class="prompt" data-src="p3"></pre>
+  </article>
+
+  <article class="pcard" id="p4">
+    <header><h3>4. Slim down the documents</h3><button class="copy" type="button" data-copy="p4">Copy</button></header>
+    <dl class="meta"><dt>When</dt><dd>The core is over 30 KB, the reference is over 150 KB, or chats feel heavy.</dd><dt>Paste in</dt><dd>Any chat in the Project.</dd><dt>You get</dt><dd>A size table, a proposal of what moves to the archive, and after your OK, the new files plus a check that nothing was lost.</dd></dl>
+    <pre class="prompt" data-src="p4"></pre>
+  </article>
+
+  <article class="pcard" id="p5">
+    <header><h3>5. Convert existing material</h3><button class="copy" type="button" data-copy="p5">Copy</button></header>
+    <dl class="meta"><dt>When</dt><dd>The project already has documents, notes or chat summaries.</dd><dt>Paste in</dt><dd>The first chat in a new Project. Attach the material.</dd><dt>You get</dt><dd>An inventory, a proposed section map, then the three files built from what you already have.</dd></dl>
+    <pre class="prompt" data-src="p5"></pre>
+  </article>
+
+  <article class="pcard" id="p6">
+    <header><h3>6. Token check</h3><button class="copy" type="button" data-copy="p6">Copy</button></header>
+    <dl class="meta"><dt>When</dt><dd>After setup, and whenever costs look high.</dd><dt>Paste in</dt><dd>A fresh chat in the Project, as the very first message.</dd><dt>You get</dt><dd>A list of what Claude is carrying and a recommendation on what to remove.</dd></dl>
+    <pre class="prompt" data-src="p6"></pre>
+  </article>
+
+  <article class="pcard" id="p7">
+    <header><h3>7. Summary for people outside the AI</h3><button class="copy" type="button" data-copy="p7">Copy</button></header>
+    <dl class="meta"><dt>When</dt><dd>Only when someone needs to read the state of the project.</dd><dt>Paste in</dt><dd>Any chat in the Project.</dd><dt>You get</dt><dd>A readable summary with no internal jargon.</dd></dl>
+    <pre class="prompt" data-src="p7"></pre>
+  </article>
+</section>
+
+<!-- ===================== TEMPLATES ===================== -->
+<section role="tabpanel" id="templates" aria-labelledby="t-templates" hidden>
+  <h2>What goes in each file</h2>
+  <p>Prompt 1 builds all of this for you. This page is the map, so you can check Claude's work or keep the files tidy by hand.</p>
+
+  <h3>Core file, under 30 KB</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Section</th><th>What it holds</th><th>Budget</th></tr></thead>
+    <tbody>
+      <tr><td>Header</td><td>Version, date, one line on what the file is.</td><td>1 KB</td></tr>
+      <tr><td>Labels and glossary</td><td>The tags below, plus project words a newcomer would not know.</td><td>3 KB</td></tr>
+      <tr><td>Where to find what</td><td>Topic to reference-section table, and the command that reads one section.</td><td>3 KB</td></tr>
+      <tr><td>0. Starting a session</td><td>Read the core only. Read reference sections only if the task needs them, and say which first.</td><td>2 KB</td></tr>
+      <tr><td>0.1 Where we stopped</td><td>What happened last session, what to do next, what is pending. Rewritten every session, never appended.</td><td>7 KB</td></tr>
+      <tr><td>2. How I work</td><td>Your preferences and the rules the AI must follow.</td><td>5 KB</td></tr>
+      <tr><td>Lessons</td><td>Mistakes the AI made, one line each, so they do not repeat.</td><td>up to 10 KB</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Reference file, one section at a time</h3>
+  <p>Numbers never change, because other text points to them ("see 5.9").</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>#</th><th>Section</th><th>#</th><th>Section</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Sources and files</td><td>12</td><td>Roadmap</td></tr>
+      <tr><td>3</td><td>Project overview</td><td>13</td><td>Decisions made (D-01, D-02...)</td></tr>
+      <tr><td>4</td><td>People</td><td>14</td><td>Open questions (Q-01, Q-02...)</td></tr>
+      <tr><td>5</td><td>Rules and technical setup</td><td>15</td><td>Risks and known problems</td></tr>
+      <tr><td>6</td><td>Current state</td><td>16</td><td>What we do not know</td></tr>
+      <tr><td>8</td><td>Requests and ideas from stakeholders</td><td>17</td><td>Update protocol (how to close a session)</td></tr>
+      <tr><td>10</td><td>How things work (processes, models)</td><td>19</td><td>Changelog</td></tr>
+      <tr><td>11</td><td>Backlog</td><td>A, B...</td><td>Appendices</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Archive file</h3>
+  <p>Resolved items, old changelog entries, past meeting detail. Text arrives word for word under the heading of the section it came from, with the version it left in. Where it used to be, a one-line italic pointer remains: "Archived on 14/10 (v1.4): what left, and where the live information is."</p>
+  <p><strong>Never moves to the archive:</strong> open questions, open risks, active rules, the current state, and decisions (replaced decisions stay as struck-through lines).</p>
+
+  <h2>Labels</h2>
+  <p>Put one in front of any claim that is not obvious. They stop guesses from turning into facts.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Label</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><code>[VERIFIED 14/10]</code></td><td>Checked directly by looking at the real thing, on that date.</td></tr>
+      <tr><td><code>[DECIDED Ana]</code></td><td>A named person decided it.</td></tr>
+      <tr><td><code>[PROPOSED]</code></td><td>An idea from the AI that nobody confirmed.</td></tr>
+      <tr><td><code>[UNVERIFIED]</code></td><td>Nobody checked it.</td></tr>
+      <tr><td><code>[PLACEHOLDER]</code></td><td>Invented content that is not real data.</td></tr>
+      <tr><td><code>[CONFLICT]</code></td><td>Two sources disagree. Both are kept until a person picks.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>Example: "Where we stopped"</h2>
+  <p>This is the section Claude rewrites at every close. It is the reason a new chat can start in seconds.</p>
+  <article class="pcard" id="ex1" style="margin-top:.75rem">
+    <header><h3 style="font-size:1rem">Sample block</h3><button class="copy" type="button" data-copy="ex1">Copy</button></header>
+    <pre class="prompt" data-src="ex1"></pre>
+  </article>
+
+  <h2>Reading one section</h2>
+  <p>Claude runs these itself when it can open files. You rarely type them. They are here so you recognize what Claude is doing.</p>
+  <article class="pcard" id="ex2" style="margin-top:.75rem">
+    <header><h3 style="font-size:1rem">Commands</h3><button class="copy" type="button" data-copy="ex2">Copy</button></header>
+    <pre class="prompt" data-src="ex2"></pre>
+  </article>
+
+  <h2>Rules every file follows</h2>
+  <ul>
+    <li>Decisions and open questions get numbers. An answered question becomes a decision, and the question stays as a struck-through line.</li>
+    <li>Nothing is deleted. Old text moves to the archive, copied by script so no word changes.</li>
+    <li>When a value is replaced, the file says what it was ("was X until 14/10").</li>
+    <li>Each update goes into the section it belongs to. There is no "today's notes" block at the end.</li>
+    <li>Version number and date at the top change on every close.</li>
+  </ul>
+</section>
+
+<!-- ===================== GLOSSARY ===================== -->
+<section role="tabpanel" id="glossary" aria-labelledby="t-glossary" hidden>
+  <h2>Glossary</h2>
+  <p>Plain meanings, plus what each term means in this system. Type to filter.</p>
+  <label class="sr" for="gq">Filter the glossary</label>
+  <input id="gq" class="search" type="search" placeholder="Filter, for example: token, archive, sed" autocomplete="off">
+  <p id="nomatch">No term matches that.</p>
+  <dl class="gloss" id="gl">
+    <div class="g"><dt>Archive</dt><dd>The third file. It holds history that no longer drives decisions: resolved questions, old changelog entries, detail from past meetings.<span class="here">In this system: text moves there word for word, a one-line pointer stays behind, and Claude opens it only when context is missing.</span></dd></div>
+    <div class="g"><dt>Changelog</dt><dd>A short list, newest first, of what changed in the documents: date, version, three to six lines.</dd></div>
+    <div class="g"><dt>Chat (or session)</dt><dd>One conversation with Claude. Claude does not remember other chats, so what it needs has to come from the files.<span class="here">In this system: a session is one chat plus its close step.</span></dd></div>
+    <div class="g"><dt>Close the session</dt><dd>The last step of a working chat. Claude updates the files with what happened, raises the version number and gives you the new files.<span class="here">Prompt 3.</span></dd></div>
+    <div class="g"><dt>Connector</dt><dd>A link between Claude and another app, such as Slack, Gmail or a project tracker.<span class="here">Each connected app adds tools Claude carries into every chat, so unused ones have a cost. Turn them off per project.</span></dd></div>
+    <div class="g"><dt>Context window</dt><dd>Everything Claude can see at one time: instructions, files, the chat so far and its own answers. It has a size limit.<span class="here">Think of it as the desk. Tokens are the papers on it.</span></dd></div>
+    <div class="g"><dt>Core file</dt><dd>The first file, under 30 KB, read in full at the start of every chat.<span class="here">It says where you stopped, what to do next, how you work, and where to find everything else.</span></dd></div>
+    <div class="g"><dt>Cowork</dt><dd>Anthropic's desktop app where Claude works with files in a folder on your computer.<span class="here">With it, Claude can open the reference file and read a single section.</span></dd></div>
+    <div class="g"><dt>Decision (D-01)</dt><dd>A numbered entry in the reference file for something a person decided, with who and when. Numbers are never reused.</dd></div>
+    <div class="g"><dt>Drift</dt><dd>When two copies of a document stop matching, for example the file in Project Knowledge is older than the one in your folder.<span class="here">The version number at the top of each file is how you spot it.</span></dd></div>
+    <div class="g"><dt>grep</dt><dd>A command that searches a file for a word and prints the matching lines. With the <code>-n</code> option it also prints line numbers.<span class="here">Claude uses it to list the headings of the reference file.</span></dd></div>
+    <div class="g"><dt>Handoff</dt><dd>A note written so the next chat, or the next person, can continue the work.<span class="here">In this system the handoff is the "Where we stopped" section, so there is no separate handoff file.</span></dd></div>
+    <div class="g"><dt>Hallucination</dt><dd>When Claude states something that sounds right but is not backed by anything.<span class="here">Labels like [UNVERIFIED] and [PROPOSED] keep such statements from becoming "facts" in the files.</span></dd></div>
+    <div class="g"><dt>KB (kilobyte)</dt><dd>A measure of file size. 1 KB is about 1,000 characters, roughly 250 tokens.<span class="here">A 30 KB core is about 7,500 tokens.</span></dd></div>
+    <div class="g"><dt>Label</dt><dd>A tag in square brackets in front of a claim that says where it came from, such as [VERIFIED 14/10] or [PROPOSED].<span class="here">See the Templates tab.</span></dd></div>
+    <div class="g"><dt>Lessons</dt><dd>A list in the core file of mistakes Claude made, one line each with the fix, so the next chat does not repeat them.</dd></div>
+    <div class="g"><dt>Markdown (.md)</dt><dd>A plain text file with light formatting marks: <code>#</code> for headings, <code>-</code> for bullets, <code>|</code> for tables. Any text editor opens it, and Claude reads it efficiently.</dd></div>
+    <div class="g"><dt>Open question (Q-01)</dt><dd>A numbered entry for something not yet decided. When answered it becomes a decision, and the question stays as a struck-through line.</dd></div>
+    <div class="g"><dt>Placeholder</dt><dd>A blank you fill in before sending a prompt.<span class="here">In this guide they are written in {curly braces} and highlighted.</span></dd></div>
+    <div class="g"><dt>Project (in Claude)</dt><dd>A workspace that groups chats with shared instructions and files.</dd></div>
+    <div class="g"><dt>Project instructions</dt><dd>Text you write once in the Project settings. It is loaded in every chat of the Project, so keep it short.<span class="here">Prompt 0.</span></dd></div>
+    <div class="g"><dt>Project Knowledge</dt><dd>The files attached to a Project. Depending on their size and your plan, they are loaded in full into each chat or searched when needed.<span class="here">Assume loaded in full: put only the core there.</span></dd></div>
+    <div class="g"><dt>Prompt</dt><dd>The message you send to Claude. In this guide, text you copy and paste.</dd></div>
+    <div class="g"><dt>RAG (retrieval)</dt><dd>When a Project has many files, the tool may search them and pull in only the matching pieces instead of loading everything.<span class="here">Useful, but you do not control it, so the setup does not depend on it.</span></dd></div>
+    <div class="g"><dt>Reference file</dt><dd>The second file, the large one. Everything that is not needed at the start of every chat.<span class="here">Read one numbered section at a time, never in full.</span></dd></div>
+    <div class="g"><dt>Routing table</dt><dd>The "Where to find what" table in the core file. It says which reference section holds which topic, and gives the command to read just that section.</dd></div>
+    <div class="g"><dt>Script</dt><dd>A short program Claude writes and runs for a mechanical job, such as copying text word for word or checking that no line was lost.<span class="here">Better than retyping, because a script does not make typos.</span></dd></div>
+    <div class="g"><dt>sed</dt><dd>A command that prints part of a file. With <code>sed -n</code> and two patterns it prints from one heading to the next.<span class="here">This is how Claude reads one section of the reference without opening the whole file.</span></dd></div>
+    <div class="g"><dt>Section number</dt><dd>Reference sections keep their numbers forever, because other text points to them (for example "see 5.9").</dd></div>
+    <div class="g"><dt>Skill</dt><dd>A packaged set of instructions Claude loads for one kind of task, such as making a Word file. The list of available skills is part of what Claude carries, like connectors.</dd></div>
+    <div class="g"><dt>Source of truth</dt><dd>The one place where the current, agreed version of something lives. If two documents disagree, it wins.</dd></div>
+    <div class="g"><dt>Stakeholder summary</dt><dd>An optional readable page for people who do not use the AI. Claude updates it only when asked, because rewriting a long page every session is expensive.<span class="here">Prompt 7.</span></dd></div>
+    <div class="g"><dt>Terminal</dt><dd>A text window where commands are typed. You will rarely open one. In Cowork, Claude runs commands for you.</dd></div>
+    <div class="g"><dt>Token</dt><dd>The unit Claude counts text in. Roughly 4 characters of English, a little fewer in other languages. Everything Claude reads and writes is measured in tokens, and both speed and usage limits depend on it.</dd></div>
+    <div class="g"><dt>Usage limits</dt><dd>How much you can use Claude in a given period. Bigger loads and longer chats use it up faster.</dd></div>
+    <div class="g"><dt>Verbatim</dt><dd>Word for word, unchanged.<span class="here">When text moves to the archive it is copied verbatim, by script, so nothing is rewritten by accident.</span></dd></div>
+    <div class="g"><dt>Version number</dt><dd>A number and a date at the top of each file (for example v1.4, 14/10). It goes up on every close. Quote it in a chat to check that Claude has the latest copy.</dd></div>
+  </dl>
+</section>
+
+<footer>Built from the NorthStar documentation setup, October 2026. Token figures are estimates. How Project Knowledge is loaded can vary by plan and tool, so run Prompt 6 to see what your own setup does.</footer>
+</main>
+
+<!-- ===================== PROMPT SOURCES (plain text, not executed) ===================== -->
+<script type="text/plain" id="src-p0">
+Token economy (mandatory):
+1. At the start of every chat, read ONLY the core md file, in full. It tells you the rest.
+2. Never read the reference md file in full. Read only the section the task needs, using the "Where to find what" table in the core and the command it gives.
+3. Do not open the archive md file or any stakeholder summary unless I ask or the core tells you to.
+4. Only re-check outside systems (code, tickets, CRM, documents) if the task depends on them, and read only what changed.
+5. Do not search old chats, connectors or the web unless the task clearly needs it.
+6. If the chat gets long, tell me and offer to close the session before continuing.
+7. Keep answers short. Do not recap what was already done.
+8. When I say "close the session", follow the close protocol in section 17 of the reference.
+</script>
+
+<script type="text/plain" id="src-p1">
+I want to set up a lean documentation system for a project, so any new chat can pick up where we stopped without re-reading everything.
+
+HOW TO TALK TO ME
+I am not technical. Explain every technical term in plain words the first time you use it, with an everyday example. Keep answers short. Do not recap.
+
+STEP 1. INTERVIEW ME FIRST
+Do not write any file yet. Ask me at most 8 questions in one message, with multiple choice where possible, covering:
+- the project name and a one-sentence goal (do not ask me for a file prefix, you choose it, see FILE NAMES below)
+- who is involved and their roles
+- the tools and systems involved
+- what already exists (documents, notes, past chats) and roughly how big it is
+- decisions already made, and questions still open
+- how I like to work (language, tone, level of detail, things you must never do)
+- whether you can open files in a folder in this tool, or whether I can only attach files to chats
+- what the next steps are
+Wait for my answers.
+
+FILE NAMES
+Choose a prefix of 2 to 4 letters from the project name (for example NorthStar becomes NS). Use it wherever this prompt says PREFIX: in the file names, inside the files and in every command. Write the project name in the header of each file. I will not edit anything, so leave no blanks for me to fill in.
+
+STEP 2. BUILD THREE FILES (plain Markdown)
+FILE 1: PREFIX-core.md. HARD LIMIT: 30 KB. Read in full at the start of every chat. Contains, in this order:
+ a) header with version number and date
+ b) the label legend (see LABELS below) and a short glossary of project terms
+ c) "Where to find what": a table mapping topics to reference section numbers, plus the exact command that reads one section, for example:
+    sed -n '/^## 13\./,/^## 14\./p' PREFIX-reference.md
+ d) section 0, how to start a session: read this file only; read reference sections only if the task needs them, and say which ones before reading
+ e) section 0.1 "Where we stopped": what happened last session, what to do next, what is pending. This section is REWRITTEN every session, never appended.
+ f) section 2 "How I work": my preferences and the rules for the AI
+ g) "Lessons": mistakes the AI made, one line each, so they are not repeated
+FILE 2: PREFIX-reference.md. Read ONE SECTION AT A TIME, never in full. Numbered sections whose numbers never change: 1 sources and files, 3 project overview, 4 people, 5 rules and technical setup, 6 current state, 8 requests and ideas from stakeholders, 10 how things work, 11 backlog, 12 roadmap, 13 decisions made (D-01, D-02...), 14 open questions (Q-01, Q-02...), 15 risks and known problems, 16 what we do not know, 17 update protocol (how to close a session), 19 changelog. Appendices as needed.
+FILE 3: PREFIX-archive.md. History only: resolved items, old changelog entries, past meeting detail. Not read at the start of a chat. Not a live document.
+
+LABELS (put one in front of every claim that is not obvious)
+[VERIFIED dd/mm] checked by looking at the real thing | [DECIDED name] a person decided it | [PROPOSED] an idea from the AI, not confirmed | [UNVERIFIED] nobody checked | [PLACEHOLDER] invented content that is not real data.
+Never present a proposal as a decision.
+
+RULES FOR ALL FILES
+- Decisions get an ID (D-01). Open questions get an ID (Q-01). When a question is answered it becomes a decision, and the question stays as a struck-through line.
+- Never delete. Text that is no longer needed moves to the archive, word for word, and a one-line italic pointer stays behind.
+- When something is replaced, note the old value in one phrase ("was X until dd/mm").
+- Keep reference section numbers stable, because other text points to them.
+
+STEP 3. CHECK YOUR WORK
+Report the size in KB of each file and the estimated tokens (characters divided by 4). If the core is over 30 KB, trim it before showing it to me.
+
+STEP 4. TELL ME WHAT TO DO NEXT
+Tell me exactly where to save each file: the core goes in Project Knowledge; the reference and archive stay in my project folder and NOT in Project Knowledge. Then write my Project instructions as a block under 200 words that says: reply language; at the start of every chat read only the core; never read the reference in full, only the needed section; do not open the archive or any stakeholder summary unless asked; re-check outside systems only when the task depends on them; do not search old chats, connectors or the web without need; warn me and offer to close the session when the chat gets long; keep answers short; follow the close protocol when I say "close the session".
+If I said I cannot open folders: split the reference into 4 to 6 topic files of 30 KB or less, add a table saying which one to attach for which task, and tell me how to attach it.
+</script>
+
+<script type="text/plain" id="src-p2">
+New session. Goal for today: {WHAT I WANT TO DO}.
+
+Read the core file only. Then tell me in at most 5 lines: where we stopped, what you suggest for today, and anything you cannot confirm. Read extra sections only if today's goal needs them, and tell me which ones before you read them.
+</script>
+
+<script type="text/plain" id="src-p3">
+Close the session. Read the close protocol (reference, section 17) first, then:
+
+1. List what happened this session: decisions (and who made them), new open questions, things built or changed, things that failed, mistakes you made, new ideas, and anything you could not confirm.
+2. Update only the sections affected, in place. Rewrite "Where we stopped" in the core (replace it, do not append). Add new lessons and new preferences to the core if there are any.
+3. Raise the version number and add a changelog entry of 3 to 6 lines.
+4. Do not update any stakeholder summary unless I ask.
+5. Check sizes. If the core is over 30 KB or the reference is over 150 KB, tell me and propose what to archive. Do not archive without my OK.
+6. Give me the updated files and a summary in 5 lines: what changed, what is pending, what you could not confirm.
+</script>
+
+<script type="text/plain" id="src-p4">
+The documentation is getting heavy. Slim it down without losing anything.
+
+1. Measure: give me a table of every file and every section with its size in KB, largest first.
+2. Propose what can move to the archive: resolved items, work that was applied and verified (leave a summary of 2 to 4 lines), old changelog entries, superseded discussion, repeated risks. NEVER move: open questions, open risks, active rules, the current state, or decisions (replaced decisions stay as struck-through lines).
+3. Wait for my OK.
+4. Move the text VERBATIM, copying by script instead of retyping. Where text left, put a one-line italic pointer: "Archived on dd/mm (vX.Y): what left, and where the live information is".
+5. Verify with a script that every non-empty line of the old files appears in the new files, and list any line that does not. Report sizes before and after.
+</script>
+
+<script type="text/plain" id="src-p5">
+I attached material about a project (documents, notes, summaries of past chats). Work out the project name from it and confirm the name with me in the inventory. Convert the material into a lean documentation system. Nothing may be lost.
+
+HOW TO TALK TO ME
+I am not technical. Explain every technical term in plain words the first time you use it, with an everyday example. Keep answers short.
+
+STEP 1. INVENTORY
+Read each item once. Give me a table: item, size, what it is, how current it looks. Do not summarize the content yet. Also ask me whether you can open files in a folder in this tool, or whether I can only attach files to chats.
+
+STEP 2. SORT
+Put every piece of content in one of four bins: CORE (needed at the start of every chat), REFERENCE (needed sometimes), ARCHIVE (history), OBSOLETE (wrong or superseded; I decide whether to keep it). Show me the proposed section map and wait for my OK.
+
+STEP 3. BUILD (after my OK)
+Three plain Markdown files. PREFIX means a prefix of 2 to 4 letters that you choose from the project name (for example NorthStar becomes NS). Use it in the file names, inside the files and in every command, and write the project name in the header of each file. I will not edit anything, so leave no blanks for me to fill in:
+- PREFIX-core.md, under 30 KB, read in full at the start of every chat: header with version and date; label legend and glossary; a "Where to find what" table with the exact command that reads one reference section (for example sed -n '/^## 13\./,/^## 14\./p' PREFIX-reference.md); how to start a session; "Where we stopped" (rewritten each session, never appended); how I work; lessons.
+- PREFIX-reference.md, read one numbered section at a time, numbers never change: 1 sources, 3 overview, 4 people, 5 rules and setup, 6 current state, 8 stakeholder requests, 10 how things work, 11 backlog, 12 roadmap, 13 decisions (D-01...), 14 open questions (Q-01...), 15 risks, 16 what we do not know, 17 update protocol, 19 changelog.
+- PREFIX-archive.md, history only.
+Labels: [VERIFIED dd/mm] [DECIDED name] [PROPOSED] [UNVERIFIED] [PLACEHOLDER] [CONFLICT].
+
+RULES
+- Move text word for word. Do not paraphrase what you move.
+- If two sources disagree, keep both and mark the line [CONFLICT]. Do not pick silently.
+- Do not invent. If something is missing, write it in section 16 (what we do not know).
+
+STEP 4. VERIFY
+Run a script that checks that every non-empty line of my original material appears in one of the new files, and list any that does not. Report sizes in KB and estimated tokens. Then tell me where to save each file (core in Project Knowledge; reference and archive in my project folder, NOT in Project Knowledge) and write my Project instructions as a block under 200 words: reply language; read only the core at the start of every chat; never read the reference in full, only the needed section; do not open the archive unless asked; re-check outside systems only when needed; offer to close the session when the chat gets long; keep answers short.
+If I cannot open folders, split the reference into 4 to 6 topic files of 30 KB or less and give me a table saying which to attach for which task.
+</script>
+
+<script type="text/plain" id="src-p6">
+Token check. Do not do any task.
+
+As far as you can see, tell me:
+1. Every file, document and instruction block that is in your context for this chat, with its approximate size (characters divided by 4 is the token estimate).
+2. Which of them you have read in full and which only in part.
+3. How many connectors, tools and skills are enabled, and their names. These also take up context.
+4. Your recommendation: what I should remove from Project Knowledge or the instructions, and what should move to on-demand reading.
+</script>
+
+<script type="text/plain" id="src-p7">
+Write a summary of the project for {AUDIENCE}. Tone: professional and plain. Length: {NUMBER} pages at most.
+
+Read only the sections you need: current state, backlog or roadmap, decisions, open questions, risks. Leave out how I work with the AI, lessons learned, internal IDs, file names and anything labeled [PLACEHOLDER] unless you mark it as example content. Tell me the version of the files you used, and what you could not confirm.
+</script>
+
+<script type="text/plain" id="src-ex1">
+## 0.1 Where we stopped (session of 14/10, closed)
+
+What happened
+- Decided D-12: the vendor list is limited to three finalists [DECIDED Ana, 14/10].
+- Draft contract template written, not yet reviewed [PROPOSED].
+- Could not confirm the budget figure. Finance has not replied [UNVERIFIED].
+
+Do next
+1. Ask Ana whether legal has reviewed the draft.
+2. Compare the three finalists using the table in reference section 11.
+3. Update Q-07 once Finance answers.
+
+Pending: Q-05 (launch date), Q-07 (budget).
+</script>
+
+<script type="text/plain" id="src-ex2">
+# XX is the file prefix Claude chose for your project
+# Read one section (change the numbers)
+sed -n '/^## 13\./,/^## 14\./p' XX-reference.md
+
+# Read one subsection
+sed -n '/^### 6\.8/,/^## 7\./p' XX-reference.md
+
+# List all headings with line numbers
+grep -n '^##' XX-reference.md
+
+# Size of a file in characters
+wc -c XX-core.md
+</script>
+
+<script>
+(function(){
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[role=tab]'));
+  var panels = {};
+  tabs.forEach(function(t){ panels[t.getAttribute('aria-controls')] = document.getElementById(t.getAttribute('aria-controls')); });
+
+  function show(id, focus){
+    if(!panels[id]) id = 'guide';
+    tabs.forEach(function(t){
+      var on = t.getAttribute('aria-controls') === id;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.tabIndex = on ? 0 : -1;
+      if(on && focus) t.focus();
+    });
+    Object.keys(panels).forEach(function(k){ panels[k].hidden = (k !== id); });
+  }
+  function go(target){
+    var parts = String(target).split(':');
+    show(parts[0], false);
+    try{ history.replaceState(null, '', '#' + target); }catch(e){}
+    var el = parts[1] ? document.getElementById(parts[1]) : null;
+    if(el){ el.scrollIntoView(); } else { window.scrollTo(0, 0); }
+  }
+  tabs.forEach(function(t, i){
+    t.addEventListener('click', function(){ go(t.getAttribute('aria-controls')); });
+    t.addEventListener('keydown', function(e){
+      var n = null;
+      if(e.key === 'ArrowRight') n = (i + 1) % tabs.length;
+      else if(e.key === 'ArrowLeft') n = (i - 1 + tabs.length) % tabs.length;
+      else if(e.key === 'Home') n = 0;
+      else if(e.key === 'End') n = tabs.length - 1;
+      if(n !== null){ e.preventDefault(); tabs[n].focus(); go(tabs[n].getAttribute('aria-controls')); }
+    });
+  });
+  document.addEventListener('click', function(e){
+    var a = e.target.closest ? e.target.closest('[data-goto]') : null;
+    if(a){ e.preventDefault(); go(a.getAttribute('data-goto')); }
+  });
+
+  function source(id){
+    var el = document.getElementById('src-' + id);
+    return el ? el.textContent.replace(/^\n/, '').replace(/\s+$/, '') : '';
+  }
+  function render(pre){
+    var text = source(pre.getAttribute('data-src'));
+    var re = /\{[^{}\n]+\}/g, last = 0, m;
+    pre.textContent = '';
+    while((m = re.exec(text))){
+      pre.appendChild(document.createTextNode(text.slice(last, m.index)));
+      var mk = document.createElement('mark');
+      mk.textContent = m[0];
+      pre.appendChild(mk);
+      last = re.lastIndex;
+    }
+    pre.appendChild(document.createTextNode(text.slice(last)));
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('pre[data-src]'), render);
+
+  function flash(btn, ok){
+    btn.textContent = ok ? 'Copied' : 'Select and copy';
+    setTimeout(function(){ btn.textContent = 'Copy'; }, 1800);
+  }
+  function fallback(text, btn){
+    var ok = false;
+    try{
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+    }catch(e){ ok = false; }
+    flash(btn, ok);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('button.copy'), function(btn){
+    btn.addEventListener('click', function(){
+      var text = source(btn.getAttribute('data-copy'));
+      try{
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(text).then(function(){ flash(btn, true); }, function(){ fallback(text, btn); });
+        } else { fallback(text, btn); }
+      }catch(e){ fallback(text, btn); }
+    });
+  });
+
+  var q = document.getElementById('gq');
+  var items = Array.prototype.slice.call(document.querySelectorAll('#gl .g'));
+  var none = document.getElementById('nomatch');
+  q.addEventListener('input', function(){
+    var v = q.value.trim().toLowerCase(), shown = 0;
+    var byName = v && items.some(function(it){ return it.querySelector('dt').textContent.toLowerCase().indexOf(v) !== -1; });
+    items.forEach(function(it){
+      var hay = byName ? it.querySelector('dt').textContent : it.textContent;
+      var hit = !v || hay.toLowerCase().indexOf(v) !== -1;
+      it.style.display = hit ? '' : 'none';
+      if(hit) shown++;
+    });
+    none.style.display = shown ? 'none' : 'block';
+  });
+
+  var h = '';
+  try{ h = (location.hash || '').replace('#', ''); }catch(e){}
+  if(h){ go(h); } else { show('guide', false); }
+})();
+</script>
+</body>
+</html>
